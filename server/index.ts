@@ -25,15 +25,25 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // ============ Middleware ============
 
+// In production, allow same-origin requests (when origin is undefined)
+// In development, allow localhost
 const allowedOrigins = process.env.FRONTEND_URL 
-  ? [process.env.FRONTEND_URL, 'http://localhost:8080']
-  : ['http://localhost:8080'];
+  ? [process.env.FRONTEND_URL, 'http://localhost:8080', 'http://localhost:5173']
+  : ['http://localhost:8080', 'http://localhost:5173'];
 
 app.use(cors({ 
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (same-origin requests in production)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    // Allow requests from allowed origins
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      logger.warn(`CORS blocked request from origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
