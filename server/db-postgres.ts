@@ -255,10 +255,7 @@ export async function initializeDatabase(): Promise<void> {
   }
 }
 
-// Initialize on import
-initializeDatabase().catch((error) => {
-  logger.error('❌ Fatal: Could not initialize database', { error });
-  process.exit(1);
-});
+// Don't initialize on import - let server/index.ts handle it
+// This prevents the server from crashing before it starts listening
 
 export default pool;

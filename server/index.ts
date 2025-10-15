@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
-import { query, encrypt } from './db-postgres';
+import { query, encrypt, initializeDatabase } from './db-postgres';
 import { hashPassword, verifyPassword, generateToken, verifyToken, createUser, getUserByEmail } from './auth';
 import { parseCookies, validateTwitterAccount, extractFollowers } from './twitter';
 import { startCampaign, pauseCampaign, stopCampaign, resumeActiveCampaigns } from './campaign-runner-disabled';
@@ -454,12 +454,25 @@ if (isProduction) {
 
 // ============ Server Start ============
 
-app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
-  logger.info(`📝 Environment: ${isProduction ? 'production' : 'development'}`);
-  resumeActiveCampaigns();
-  resumeActiveFollowCampaigns();
-});
+async function startServer() {
+  try {
+    // Initialize database first
+    await initializeDatabase();
+    
+    // Then start the server
+    app.listen(PORT, () => {
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`📝 Environment: ${isProduction ? 'production' : 'development'}`);
+      resumeActiveCampaigns();
+      resumeActiveFollowCampaigns();
+    });
+  } catch (error) {
+    logger.error('❌ Failed to start server', { error });
+    process.exit(1);
+  }
+}
+
+startServer();
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
