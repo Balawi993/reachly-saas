@@ -261,6 +261,20 @@ export async function initializeDatabase(): Promise<void> {
       );
     `);
 
+    await query(`
+      CREATE TABLE IF NOT EXISTS followers (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        username VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        profile_url TEXT,
+        extracted_from VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, username)
+      );
+    `);
+
     // Create indexes for better performance
     await query(`CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_campaigns_user_id ON campaigns(user_id);`);
@@ -271,6 +285,8 @@ export async function initializeDatabase(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_campaigns_status ON follow_campaigns(status);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_targets_campaign_id ON follow_targets(campaign_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_targets_status ON follow_targets(status);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_followers_user_id ON followers(user_id);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_followers_account_id ON followers(account_id);`);
 
     logger.info('✅ Database schema initialized successfully');
   } catch (error) {
