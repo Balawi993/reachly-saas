@@ -23,6 +23,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Trust proxy for Railway/production environment
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 // ============ Middleware ============
 
 // In production, allow same-origin requests (when origin is undefined)
