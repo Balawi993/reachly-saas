@@ -1,5 +1,6 @@
 import { query } from './db-postgres';
 import { sendDM } from './twitter';
+import { incrementUsage } from './subscription';
 import logger from './logger';
 
 interface CampaignConfig {
@@ -196,6 +197,12 @@ async function processCampaign(campaignId: number) {
         SET stats_sent = stats_sent + 1
         WHERE id = $1
       `, [campaignId]);
+
+      // Increment user's DM usage
+      const campaignUserResult = await query(`SELECT user_id FROM campaigns WHERE id = $1`, [campaignId]);
+      if (campaignUserResult.rows[0]) {
+        await incrementUsage(campaignUserResult.rows[0].user_id, 'dms');
+      }
 
       console.log(`✅ [Campaign ${campaignId}] Sent to ${target.username}`);
     } else {

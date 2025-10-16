@@ -1,6 +1,7 @@
 import { query } from './db-postgres';
-import logger from './logger';
 import { followUser } from './twitter';
+import { incrementUsage } from './subscription';
+import logger from './logger';
 
 interface FollowCampaignConfig {
   id: number;
@@ -166,6 +167,12 @@ async function processFollowCampaign(campaignId: number) {
         SET stats_followed = stats_followed + 1
         WHERE id = $1
       `, [campaignId]);
+
+      // Increment user's follow usage
+      const campaignUserResult = await query(`SELECT user_id FROM follow_campaigns WHERE id = $1`, [campaignId]);
+      if (campaignUserResult.rows[0]) {
+        await incrementUsage(campaignUserResult.rows[0].user_id, 'follows');
+      }
 
       console.log(`✅ [Follow Campaign ${campaignId}] Followed ${target.username}`);
     } else {

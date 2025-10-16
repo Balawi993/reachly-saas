@@ -16,6 +16,18 @@ import { parseCookies, validateTwitterAccount, extractFollowers } from './twitte
 import { startCampaign, pauseCampaign, stopCampaign, resumeActiveCampaigns } from './campaign-runner';
 import { startFollowCampaign, pauseFollowCampaign, stopFollowCampaign, resumeActiveFollowCampaigns } from './follow-runner';
 import { getQueueStats } from './queue';
+import { adminMiddleware, checkLimit } from './middleware';
+import { 
+  getUserSubscription, 
+  incrementUsage, 
+  changeUserPlan, 
+  resetUserUsage,
+  getAllPlans,
+  getPlanById,
+  updatePlan,
+  getAllUsersWithSubscriptions,
+  getSystemStats
+} from './subscription';
 import logger from './logger';
 
 dotenv.config({ path: '.env.local' });
@@ -174,7 +186,7 @@ app.get('/api/accounts', authMiddleware, async (req: any, res) => {
   }
 });
 
-app.post('/api/accounts', authMiddleware, async (req: any, res) => {
+app.post('/api/accounts', authMiddleware, checkLimit('add_account'), async (req: any, res) => {
   try {
     const { username, cookies } = req.body;
     if (!username || !cookies) return res.status(400).json({ error: 'Username and cookies required' });
@@ -307,7 +319,7 @@ app.get('/api/campaigns/:id', authMiddleware, async (req: any, res) => {
   }
 });
 
-app.post('/api/campaigns', authMiddleware, async (req: any, res) => {
+app.post('/api/campaigns', authMiddleware, checkLimit('create_dm_campaign'), async (req: any, res) => {
   try {
     const { name, accountId, tags, targetSource, manualTargets, selectedFollowers, message, pacing } = req.body;
     if (!name || !accountId || !message) return res.status(400).json({ error: 'Missing required fields' });
@@ -479,7 +491,7 @@ app.get('/api/follow-campaigns/:id', authMiddleware, async (req: any, res) => {
   }
 });
 
-app.post('/api/follow-campaigns', authMiddleware, async (req: any, res) => {
+app.post('/api/follow-campaigns', authMiddleware, checkLimit('create_follow_campaign'), async (req: any, res) => {
   try {
     const { name, accountId, targetSource, manualTargets, selectedFollowers, pacing } = req.body;
     if (!name || !accountId) return res.status(400).json({ error: 'Missing required fields' });
@@ -731,6 +743,113 @@ if (isProduction) {
     }
   });
 }
+
+// ============ Subscription & Admin APIs ============
+
+// Get user's subscription info
+app.get('/api/subscription', authMiddleware, async (req: any, res) => {
+  try {
+    const subscription = await getUserSubscription(req.user.id);
+    res.json(subscription);
+  } catch (error) {
+    logger.error('Get subscription error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Get all plans
+app.get('/api/plans', async (req, res) => {
+  try {
+    const plans = await getAllPlans();
+    res.json(plans);
+  } catch (error) {
+    logger.error('Get plans error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ============ Admin APIs ============
+
+// Get all users (admin only)
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const users = await getAllUsersWithSubscriptions();
+    res.json(users);
+  } catch (error) {
+    logger.error('Admin get users error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Change user plan (admin only)
+app.post('/api/admin/users/:userId/plan', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planId } = req.body;
+    
+    await changeUserPlan(parseInt(userId), planId);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Admin change plan error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Reset user usage (admin only)
+app.post('/api/admin/users/:userId/reset-usage', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await resetUserUsage(parseInt(userId));
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Admin reset usage error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Get all plans (admin only - with edit capability)
+app.get('/api/admin/plans', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const plans = await query(`
+      SELECT 
+        sp.*,
+        COUNT(us.id) as subscriber_count
+      FROM subscription_plans sp
+      LEFT JOIN user_subscriptions us ON sp.id = us.plan_id
+      GROUP BY sp.id
+      ORDER BY sp.display_order
+    `);
+    res.json(plans.rows);
+  } catch (error) {
+    logger.error('Admin get plans error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Update plan (admin only)
+app.put('/api/admin/plans/:planId', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const updates = req.body;
+    
+    await updatePlan(parseInt(planId), updates);
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Admin update plan error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// Get system stats (admin only)
+app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const stats = await getSystemStats();
+    res.json(stats);
+  } catch (error) {
+    logger.error('Admin get stats error', { error });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
 
 // ============ Server Start ============
 
