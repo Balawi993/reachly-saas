@@ -2,11 +2,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, Save } from 'lucide-react';
+import { LogOut, Save, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { clearAuthToken, userSettings } from '@/lib/api';
+import { clearAuthToken, userSettings, subscription } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { SettingsSkeleton } from '@/components/loading/PageSkeleton';
 
@@ -16,21 +17,28 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({ firstName: '', lastName: '', email: '' });
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
 
   useEffect(() => {
-    loadProfile();
+    loadData();
   }, []);
 
-  const loadProfile = async () => {
+  const loadData = async () => {
     try {
-      const data = await userSettings.getProfile();
+      const [profileData, subData] = await Promise.all([
+        userSettings.getProfile(),
+        subscription.get().catch(() => null)
+      ]);
+      
       setProfile({
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        email: data.email || ''
+        firstName: profileData.first_name || '',
+        lastName: profileData.last_name || '',
+        email: profileData.email || ''
       });
+      
+      setSubscriptionData(subData);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('Error loading data:', error);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -85,6 +93,30 @@ export default function Settings() {
     return <SettingsSkeleton />;
   }
 
+  const UsageBar = ({ label, used, limit }: { label: string; used: number; limit: number }) => {
+    const percentage = limit > 0 ? (used / limit) * 100 : 0;
+    const isNearLimit = percentage >= 80;
+    
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">{label}</span>
+          <span className={`font-medium ${isNearLimit ? 'text-warning' : 'text-foreground'}`}>
+            {used} / {limit}
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full transition-all ${
+              isNearLimit ? 'bg-warning' : 'bg-gradient-primary'
+            }`}
+            style={{ width: `${Math.min(percentage, 100)}%` }}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-4xl space-y-6">
@@ -92,6 +124,61 @@ export default function Settings() {
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
           <p className="text-muted-foreground">Manage your account preferences</p>
         </div>
+
+        {/* Subscription & Usage */}
+        {subscriptionData && (
+          <Card className="p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground">Your Plan</h2>
+              <Badge variant="default" className="text-base">
+                {subscriptionData.plan_name}
+              </Badge>
+            </div>
+
+            <div className="space-y-4">
+              <UsageBar
+                label="DMs This Month"
+                used={subscriptionData.dms_used_this_period || 0}
+                limit={subscriptionData.max_dms_per_month || 0}
+              />
+              
+              <UsageBar
+                label="Follows This Month"
+                used={subscriptionData.follows_used_this_period || 0}
+                limit={subscriptionData.max_follows_per_month || 0}
+              />
+
+              <div className="grid gap-4 pt-4 md:grid-cols-3">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-sm text-muted-foreground">Connected Accounts</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    - / {subscriptionData.max_accounts}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-sm text-muted-foreground">DM Campaigns</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    - / {subscriptionData.max_active_dm_campaigns === 999 ? '∞' : subscriptionData.max_active_dm_campaigns}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-sm text-muted-foreground">Follow Campaigns</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    - / {subscriptionData.max_active_follow_campaigns === 999 ? '∞' : subscriptionData.max_active_follow_campaigns}
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                className="w-full bg-gradient-primary"
+                onClick={() => navigate('/plans')}
+              >
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Upgrade Plan
+              </Button>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6">
           <h2 className="mb-6 text-xl font-semibold text-foreground">Profile</h2>
