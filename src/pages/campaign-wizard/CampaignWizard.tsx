@@ -131,13 +131,15 @@ export default function CampaignWizard() {
         pacing: draft.pacing
       };
       
+      let savedCampaign;
       if (editId) {
-        await campaigns.update(Number(editId), draftData);
+        savedCampaign = await campaigns.update(Number(editId), draftData);
         toast.success('Draft updated successfully!');
       } else {
-        await campaigns.create(draftData);
+        savedCampaign = await campaigns.create(draftData);
         toast.success('Draft saved successfully!');
       }
+      console.log('Saved campaign:', savedCampaign);
       localStorage.removeItem('campaign_draft');
       navigate('/campaigns');
     } catch (error) {

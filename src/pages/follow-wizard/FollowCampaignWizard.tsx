@@ -124,13 +124,15 @@ export default function FollowCampaignWizard() {
         }
       };
       
+      let savedCampaign;
       if (editId) {
-        await followCampaigns.update(Number(editId), draftData);
+        savedCampaign = await followCampaigns.update(Number(editId), draftData);
         toast.success('Draft updated successfully!');
       } else {
-        await followCampaigns.create(draftData);
+        savedCampaign = await followCampaigns.create(draftData);
         toast.success('Draft saved successfully!');
       }
+      console.log('Saved campaign:', savedCampaign);
       localStorage.removeItem('follow_campaign_draft');
       navigate('/follow-campaigns');
     } catch (error) {
