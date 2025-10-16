@@ -2,6 +2,7 @@ import { Pool, PoolClient } from 'pg';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 import logger from './logger';
 
 // ============ إعداد PostgreSQL Connection ============
@@ -397,7 +398,6 @@ async function initializeDefaultData(): Promise<void> {
     
     if (adminResult.rows.length === 0) {
       logger.info('🔄 Creating admin user...');
-      const bcrypt = require('bcryptjs');
       const hashedPassword = await bcrypt.hash('Balawi123', 10);
       
       const userResult = await query(`
@@ -445,7 +445,9 @@ async function initializeDefaultData(): Promise<void> {
     }
 
   } catch (error) {
-    logger.error('❌ Failed to initialize default data', { error });
+    logger.error('❌ Failed to initialize default data');
+    logger.error('Error details:', error);
+    console.error('Full error:', error);
     // Don't throw - this is not critical
   }
 }
