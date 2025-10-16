@@ -13,6 +13,7 @@
     "postinstall": "npm run build",
     "migrate": "node migrate-to-postgres.js",
     "create-admin": "node create-admin.js",
+    "fix-admin": "node fix-admin-role.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
