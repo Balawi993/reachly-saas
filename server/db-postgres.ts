@@ -178,10 +178,54 @@ export async function initializeDatabase(): Promise<void> {
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name VARCHAR(255)`);
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name VARCHAR(255)`);
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT`);
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`);
       logger.info('✅ User columns migration completed');
     } catch (error) {
       logger.warn('⚠️  User columns migration skipped (columns may already exist)');
     }
+
+    // Subscription Plans Table
+    await query(`
+      CREATE TABLE IF NOT EXISTS subscription_plans (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(50) NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        
+        max_accounts INTEGER DEFAULT 1,
+        max_dms_per_month INTEGER DEFAULT 100,
+        max_follows_per_month INTEGER DEFAULT 50,
+        max_active_dm_campaigns INTEGER DEFAULT 1,
+        max_active_follow_campaigns INTEGER DEFAULT 1,
+        
+        is_active BOOLEAN DEFAULT TRUE,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // User Subscriptions Table
+    await query(`
+      CREATE TABLE IF NOT EXISTS user_subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        plan_id INTEGER NOT NULL REFERENCES subscription_plans(id),
+        
+        status VARCHAR(20) DEFAULT 'active',
+        subscription_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        subscription_end TIMESTAMP,
+        
+        dms_used_this_period INTEGER DEFAULT 0,
+        follows_used_this_period INTEGER DEFAULT 0,
+        period_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        period_end TIMESTAMP,
+        
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        
+        UNIQUE(user_id)
+      );
+    `);
 
     await query(`
       CREATE TABLE IF NOT EXISTS accounts (
@@ -297,15 +341,113 @@ export async function initializeDatabase(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_targets_status ON targets(status);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_campaigns_user_id ON follow_campaigns(user_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_campaigns_status ON follow_campaigns(status);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON user_subscriptions(user_id);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_user_subscriptions_plan_id ON user_subscriptions(plan_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_targets_campaign_id ON follow_targets(campaign_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_follow_targets_status ON follow_targets(status);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_followers_user_id ON followers(user_id);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_followers_account_id ON followers(account_id);`);
 
     logger.info('✅ Database schema initialized successfully');
+    
+    // Initialize default data
+    await initializeDefaultData();
   } catch (error) {
     logger.error('❌ Failed to initialize database schema', { error });
     throw error;
+  }
+}
+
+/**
+ * Initialize default subscription plans and admin user
+ */
+async function initializeDefaultData(): Promise<void> {
+  try {
+    // Check if plans already exist
+    const plansResult = await query(`SELECT COUNT(*) FROM subscription_plans`);
+    if (parseInt(plansResult.rows[0].count) > 0) {
+      logger.info('⏭️  Default plans already exist, skipping...');
+      return;
+    }
+
+    logger.info('🔄 Inserting default subscription plans...');
+
+    // Insert Free Plan
+    await query(`
+      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+      VALUES ('Free', 0, 1, 100, 50, 1, 1, 1)
+    `);
+
+    // Insert Starter Plan
+    await query(`
+      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+      VALUES ('Starter', 29, 3, 1000, 500, 5, 3, 2)
+    `);
+
+    // Insert Pro Plan
+    await query(`
+      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+      VALUES ('Pro', 79, 10, 10000, 5000, 999, 999, 3)
+    `);
+
+    logger.info('✅ Default plans created successfully');
+
+    // Create admin user if doesn't exist
+    const adminEmail = 'admin@reachly.com';
+    const adminResult = await query(`SELECT id FROM users WHERE email = $1`, [adminEmail]);
+    
+    if (adminResult.rows.length === 0) {
+      logger.info('🔄 Creating admin user...');
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash('Balawi123', 10);
+      
+      const userResult = await query(`
+        INSERT INTO users (email, password_hash, first_name, last_name, role)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `, [adminEmail, hashedPassword, 'Admin', 'User', 'admin']);
+      
+      const adminId = userResult.rows[0].id;
+      
+      // Assign Pro plan to admin
+      const proResult = await query(`SELECT id FROM subscription_plans WHERE name = 'Pro'`);
+      const proPlanId = proResult.rows[0].id;
+      
+      await query(`
+        INSERT INTO user_subscriptions (user_id, plan_id, status, period_end)
+        VALUES ($1, $2, 'active', NOW() + INTERVAL '365 days')
+      `, [adminId, proPlanId]);
+      
+      logger.info('✅ Admin user created successfully');
+      logger.info('📧 Admin Email: admin@reachly.com');
+      logger.info('🔑 Admin Password: Balawi123');
+    }
+
+    // Assign Free plan to all existing users without subscription
+    const usersWithoutSub = await query(`
+      SELECT u.id FROM users u
+      LEFT JOIN user_subscriptions us ON u.id = us.user_id
+      WHERE us.id IS NULL AND u.role != 'admin'
+    `);
+
+    if (usersWithoutSub.rows.length > 0) {
+      logger.info(`🔄 Assigning Free plan to ${usersWithoutSub.rows.length} existing users...`);
+      const freeResult = await query(`SELECT id FROM subscription_plans WHERE name = 'Free'`);
+      const freePlanId = freeResult.rows[0].id;
+
+      for (const user of usersWithoutSub.rows) {
+        await query(`
+          INSERT INTO user_subscriptions (user_id, plan_id, status, period_end)
+          VALUES ($1, $2, 'active', NOW() + INTERVAL '30 days')
+        `, [user.id, freePlanId]);
+      }
+      
+      logger.info('✅ Free plans assigned to existing users');
+    }
+
+  } catch (error) {
+    logger.error('❌ Failed to initialize default data', { error });
+    // Don't throw - this is not critical
   }
 }
 
