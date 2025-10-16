@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -40,7 +40,10 @@ const steps = [
 
 export default function CampaignWizard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(!!editId);
   const [draft, setDraft] = useState<CampaignDraft>({
     name: '',
     accountId: '',
@@ -59,6 +62,44 @@ export default function CampaignWizard() {
       retryAttempts: 2,
     },
   });
+
+  useEffect(() => {
+    if (editId) {
+      loadDraft(editId);
+    }
+  }, [editId]);
+
+  const loadDraft = async (id: string) => {
+    try {
+      const { campaigns } = await import('@/lib/api');
+      const campaign = await campaigns.get(Number(id));
+      
+      setDraft({
+        name: campaign.name || '',
+        accountId: campaign.account_id?.toString() || '',
+        tags: campaign.tags ? JSON.parse(campaign.tags) : [],
+        targetSource: campaign.target_source || 'manual',
+        manualTargets: '',
+        followerUsername: '',
+        followerQuantity: 100,
+        selectedFollowers: campaign.targets || [],
+        message: campaign.message_template || '',
+        pacing: {
+          perMinute: campaign.pacing_per_minute || 3,
+          delayMin: campaign.pacing_delay_min || 15,
+          delayMax: campaign.pacing_delay_max || 30,
+          dailyCap: campaign.pacing_daily_cap || 50,
+          retryAttempts: campaign.pacing_retry_attempts || 2,
+        },
+      });
+      toast.success('Draft loaded successfully!');
+    } catch (error) {
+      console.error('Error loading draft:', error);
+      toast.error('Failed to load draft');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateDraft = (updates: Partial<CampaignDraft>) => {
     setDraft(prev => ({ ...prev, ...updates }));
@@ -90,9 +131,15 @@ export default function CampaignWizard() {
         pacing: draft.pacing
       };
       
-      await campaigns.create(draftData);
-      toast.success('Draft saved successfully!');
+      if (editId) {
+        await campaigns.update(Number(editId), draftData);
+        toast.success('Draft updated successfully!');
+      } else {
+        await campaigns.create(draftData);
+        toast.success('Draft saved successfully!');
+      }
       localStorage.removeItem('campaign_draft');
+      navigate('/campaigns');
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft');

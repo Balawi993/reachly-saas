@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -35,7 +35,10 @@ const steps = [
 
 export default function FollowCampaignWizard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(!!editId);
   const [draft, setDraft] = useState<FollowCampaignDraft>({
     name: '',
     accountId: '',
@@ -45,12 +48,47 @@ export default function FollowCampaignWizard() {
     followerQuantity: 100,
     selectedFollowers: [],
     settings: {
-      followsPerMinute: 5,
-      dailyCap: 100,
+      followsPerMinute: 3,
+      dailyCap: 50,
       randomDelay: true,
       autoPauseOnHighFailure: true,
     },
   });
+
+  useEffect(() => {
+    if (editId) {
+      loadDraft(editId);
+    }
+  }, [editId]);
+
+  const loadDraft = async (id: string) => {
+    try {
+      const { followCampaigns } = await import('@/lib/api');
+      const campaign = await followCampaigns.get(Number(id));
+      
+      setDraft({
+        name: campaign.name || '',
+        accountId: campaign.account_id?.toString() || '',
+        targetSource: campaign.target_source || 'manual',
+        manualTargets: '',
+        followerUsername: '',
+        followerQuantity: 100,
+        selectedFollowers: campaign.targets || [],
+        settings: {
+          followsPerMinute: campaign.pacing_per_minute || 3,
+          dailyCap: campaign.pacing_daily_cap || 50,
+          randomDelay: true,
+          autoPauseOnHighFailure: true,
+        },
+      });
+      toast.success('Draft loaded successfully!');
+    } catch (error) {
+      console.error('Error loading draft:', error);
+      toast.error('Failed to load draft');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateDraft = (updates: Partial<FollowCampaignDraft>) => {
     setDraft(prev => ({ ...prev, ...updates }));
@@ -86,9 +124,15 @@ export default function FollowCampaignWizard() {
         }
       };
       
-      await followCampaigns.create(draftData);
-      toast.success('Draft saved successfully!');
+      if (editId) {
+        await followCampaigns.update(Number(editId), draftData);
+        toast.success('Draft updated successfully!');
+      } else {
+        await followCampaigns.create(draftData);
+        toast.success('Draft saved successfully!');
+      }
       localStorage.removeItem('follow_campaign_draft');
+      navigate('/follow-campaigns');
     } catch (error) {
       console.error('Error saving draft:', error);
       toast.error('Failed to save draft');

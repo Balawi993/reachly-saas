@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Play, Pause, StopCircle, UserPlus } from 'lucide-react';
+import { Plus, Search, Filter, Play, Pause, StopCircle, UserPlus, Edit } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -181,38 +181,56 @@ export default function FollowCampaigns() {
                 </div>
 
                 <div className="flex gap-2 ml-4">
-                  {campaign.status !== 'active' && campaign.status !== 'completed' && (
+                  {campaign.status === 'draft' ? (
                     <Button 
                       size="sm" 
-                      variant="outline"
-                      onClick={(e) => handleStart(campaign.id, e)}
-                      title="Start campaign"
+                      variant="default"
+                      className="bg-gradient-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/follow-campaigns/wizard?edit=${campaign.id}`);
+                      }}
+                      title="Continue editing draft"
                     >
-                      <Play className="h-3 w-3 mr-1" />
-                      Start
+                      <Edit className="h-3 w-3 mr-1" />
+                      Continue Setup
                     </Button>
-                  )}
-                  {campaign.status === 'active' && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={(e) => handlePause(campaign.id, e)}
-                      title="Pause campaign"
-                    >
-                      <Pause className="h-3 w-3 mr-1" />
-                      Pause
-                    </Button>
-                  )}
-                  {campaign.status !== 'completed' && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={(e) => handleStop(campaign.id, e)}
-                      title="Stop campaign"
-                    >
-                      <StopCircle className="h-3 w-3 mr-1" />
-                      Stop
-                    </Button>
+                  ) : (
+                    <>
+                      {campaign.status !== 'active' && campaign.status !== 'completed' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={(e) => handleStart(campaign.id, e)}
+                          title="Start campaign"
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start
+                        </Button>
+                      )}
+                      {campaign.status === 'active' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={(e) => handlePause(campaign.id, e)}
+                          title="Pause campaign"
+                        >
+                          <Pause className="h-3 w-3 mr-1" />
+                          Pause
+                        </Button>
+                      )}
+                      {campaign.status !== 'completed' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={(e) => handleStop(campaign.id, e)}
+                          title="Stop campaign"
+                        >
+                          <StopCircle className="h-3 w-3 mr-1" />
+                          Stop
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

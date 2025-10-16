@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Play, Pause, StopCircle, Download } from 'lucide-react';
+import { ArrowLeft, Download, Play, Pause, StopCircle, Edit } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { campaigns } from '@/lib/api';
@@ -131,20 +131,34 @@ export default function CampaignDetail() {
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </Button>
-            {campaign.status !== 'active' && campaign.status !== 'completed' && (
-              <Button variant="outline" size="icon" onClick={handleStart} title="Start campaign">
-                <Play className="h-4 w-4" />
+            {campaign.status === 'draft' ? (
+              <Button 
+                variant="default" 
+                className="bg-gradient-primary"
+                onClick={() => navigate(`/campaigns/wizard?edit=${campaign.id}`)}
+                title="Continue editing draft"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Continue Setup
               </Button>
-            )}
-            {campaign.status === 'active' && (
-              <Button variant="outline" size="icon" onClick={handlePause} title="Pause campaign">
-                <Pause className="h-4 w-4" />
-              </Button>
-            )}
-            {campaign.status !== 'completed' && (
-              <Button variant="outline" size="icon" onClick={handleStop} title="Stop campaign">
-                <StopCircle className="h-4 w-4" />
-              </Button>
+            ) : (
+              <>
+                {campaign.status !== 'active' && campaign.status !== 'completed' && (
+                  <Button variant="outline" size="icon" onClick={handleStart} title="Start campaign">
+                    <Play className="h-4 w-4" />
+                  </Button>
+                )}
+                {campaign.status === 'active' && (
+                  <Button variant="outline" size="icon" onClick={handlePause} title="Pause campaign">
+                    <Pause className="h-4 w-4" />
+                  </Button>
+                )}
+                {campaign.status !== 'completed' && (
+                  <Button variant="outline" size="icon" onClick={handleStop} title="Stop campaign">
+                    <StopCircle className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
