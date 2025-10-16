@@ -15,6 +15,9 @@ import FollowCampaignWizard from "./pages/follow-wizard/FollowCampaignWizard";
 import Accounts from "./pages/Accounts";
 import Settings from "./pages/Settings";
 import Plans from "./pages/Plans";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +43,9 @@ const App = () => (
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/plans" element={<Plans />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -129,3 +129,37 @@ export const userSettings = {
   updatePassword: (data: { currentPassword: string; newPassword: string }) =>
     fetchAPI('/user/password', { method: 'PUT', body: JSON.stringify(data) }),
 };
+
+// Subscription
+export const subscription = {
+  get: () => fetchAPI('/subscription'),
+  
+  getPlans: () => fetchAPI('/plans'),
+};
+
+// Admin
+export const admin = {
+  // Users
+  getUsers: () => fetchAPI('/admin/users'),
+  
+  changeUserPlan: (userId: number, planId: number) =>
+    fetchAPI(`/admin/users/${userId}/plan`, { 
+      method: 'POST', 
+      body: JSON.stringify({ planId }) 
+    }),
+  
+  resetUserUsage: (userId: number) =>
+    fetchAPI(`/admin/users/${userId}/reset-usage`, { method: 'POST' }),
+  
+  // Plans
+  getPlans: () => fetchAPI('/admin/plans'),
+  
+  updatePlan: (planId: number, data: any) =>
+    fetchAPI(`/admin/plans/${planId}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(data) 
+    }),
+  
+  // Stats
+  getStats: () => fetchAPI('/admin/stats'),
+};

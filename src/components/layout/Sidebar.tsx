@@ -7,7 +7,9 @@ import {
   CreditCard,
   Sparkles,
   UserPlus,
+  Shield,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -18,7 +20,28 @@ const navigation = [
   { name: 'Plans', href: '/plans', icon: CreditCard },
 ];
 
+const adminNavigation = [
+  { name: 'Admin Panel', href: '/admin', icon: Shield },
+  { name: 'Manage Users', href: '/admin/users', icon: Users },
+  { name: 'Manage Plans', href: '/admin/plans', icon: CreditCard },
+];
+
 export const Sidebar = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if user is admin from localStorage or API
+    const checkAdmin = async () => {
+      try {
+        const { userSettings } = await import('@/lib/api');
+        const profile = await userSettings.getProfile();
+        setIsAdmin(profile.role === 'admin');
+      } catch (error) {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, []);
   return (
     <div className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-border bg-card">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-6">
@@ -47,6 +70,31 @@ export const Sidebar = () => {
             {item.name}
           </NavLink>
         ))}
+
+        {isAdmin && (
+          <>
+            <div className="my-4 border-t border-border" />
+            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+              ADMIN
+            </div>
+            {adminNavigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  }`
+                }
+              >
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
 
       <div className="shrink-0 border-t border-border p-4">
