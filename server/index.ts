@@ -80,7 +80,7 @@ app.use(cookieParser());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 20, // Increased for development
   message: 'Too many login attempts, please try again later',
 });
 
