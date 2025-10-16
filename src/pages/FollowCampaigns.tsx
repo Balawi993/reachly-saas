@@ -155,7 +155,7 @@ export default function FollowCampaigns() {
                       <p className="text-xs text-muted-foreground">Total Targets</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-primary">{campaign.stats_sent}</p>
+                      <p className="text-2xl font-bold text-primary">{campaign.stats_followed || 0}</p>
                       <p className="text-xs text-muted-foreground">Followed</p>
                     </div>
                     <div>
@@ -168,13 +168,13 @@ export default function FollowCampaigns() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Progress</span>
                       <span className="font-medium text-foreground">
-                        {campaign.stats_total > 0 ? ((campaign.stats_sent / campaign.stats_total) * 100).toFixed(0) : 0}%
+                        {campaign.stats_total > 0 ? (((campaign.stats_followed || 0) / campaign.stats_total) * 100).toFixed(0) : 0}%
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full bg-gradient-primary transition-all"
-                        style={{ width: `${campaign.stats_total > 0 ? (campaign.stats_sent / campaign.stats_total) * 100 : 0}%` }}
+                        style={{ width: `${campaign.stats_total > 0 ? ((campaign.stats_followed || 0) / campaign.stats_total) * 100 : 0}%` }}
                       />
                     </div>
                   </div>

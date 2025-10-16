@@ -171,7 +171,7 @@ export default function FollowCampaignDetail() {
           </Card>
           <Card className="p-6">
             <p className="text-sm text-muted-foreground">Followed</p>
-            <p className="mt-2 text-3xl font-bold text-primary">{campaign.stats_sent}</p>
+            <p className="mt-2 text-3xl font-bold text-primary">{campaign.stats_followed || 0}</p>
           </Card>
           <Card className="p-6">
             <p className="text-sm text-muted-foreground">Pending</p>
@@ -188,13 +188,13 @@ export default function FollowCampaignDetail() {
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Campaign Progress</span>
               <span className="font-medium text-foreground">
-                {campaign.stats_total > 0 ? ((campaign.stats_sent / campaign.stats_total) * 100).toFixed(1) : 0}%
+                {campaign.stats_total > 0 ? (((campaign.stats_followed || 0) / campaign.stats_total) * 100).toFixed(1) : 0}%
               </span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full bg-gradient-primary transition-all"
-                style={{ width: `${campaign.stats_total > 0 ? (campaign.stats_sent / campaign.stats_total) * 100 : 0}%` }}
+                style={{ width: `${campaign.stats_total > 0 ? ((campaign.stats_followed || 0) / campaign.stats_total) * 100 : 0}%` }}
               />
             </div>
           </div>
