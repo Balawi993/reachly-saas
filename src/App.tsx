@@ -32,9 +32,11 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/campaigns/new" element={<CampaignWizard />} />
+            <Route path="/campaigns/wizard" element={<CampaignWizard />} />
             <Route path="/campaigns/:id" element={<CampaignDetail />} />
             <Route path="/follow-campaigns" element={<FollowCampaigns />} />
             <Route path="/follow-campaigns/new" element={<FollowCampaignWizard />} />
+            <Route path="/follow-campaigns/wizard" element={<FollowCampaignWizard />} />
             <Route path="/follow-campaigns/:id" element={<FollowCampaignDetail />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/conversations" element={<Conversations />} />
