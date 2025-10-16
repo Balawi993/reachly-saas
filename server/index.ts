@@ -162,8 +162,14 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     
+    // DEBUG: Log user object
+    console.log('🔍 DEBUG - User object:', { id: user.id, email: user.email, role: user.role });
+    console.log('🔍 DEBUG - User.role value:', user.role);
+    console.log('🔍 DEBUG - User.role type:', typeof user.role);
+    
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
     logger.info('User logged in', { userId: user.id, role: user.role });
+    console.log('🔍 DEBUG - Generated token payload:', { id: user.id, email: user.email, role: user.role });
     res.json({ user: { id: user.id, email: user.email, role: user.role }, token });
   } catch (error) {
     logger.error('Login error', { error });
