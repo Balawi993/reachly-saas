@@ -365,34 +365,33 @@ async function initializeDefaultData(): Promise<void> {
   try {
     // Check if plans already exist
     const plansResult = await query(`SELECT COUNT(*) FROM subscription_plans`);
-    if (parseInt(plansResult.rows[0].count) > 0) {
-      logger.info('⏭️  Default plans already exist, skipping...');
-      return;
+    if (parseInt(plansResult.rows[0].count) === 0) {
+      logger.info('🔄 Inserting default subscription plans...');
+
+      // Insert Free Plan
+      await query(`
+        INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+        VALUES ('Free', 0, 1, 100, 50, 1, 1, 1)
+      `);
+
+      // Insert Starter Plan
+      await query(`
+        INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+        VALUES ('Starter', 29, 3, 1000, 500, 5, 3, 2)
+      `);
+
+      // Insert Pro Plan
+      await query(`
+        INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
+        VALUES ('Pro', 79, 10, 10000, 5000, 999, 999, 3)
+      `);
+
+      logger.info('✅ Default plans created successfully');
+    } else {
+      logger.info('⏭️  Default plans already exist');
     }
 
-    logger.info('🔄 Inserting default subscription plans...');
-
-    // Insert Free Plan
-    await query(`
-      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
-      VALUES ('Free', 0, 1, 100, 50, 1, 1, 1)
-    `);
-
-    // Insert Starter Plan
-    await query(`
-      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
-      VALUES ('Starter', 29, 3, 1000, 500, 5, 3, 2)
-    `);
-
-    // Insert Pro Plan
-    await query(`
-      INSERT INTO subscription_plans (name, price, max_accounts, max_dms_per_month, max_follows_per_month, max_active_dm_campaigns, max_active_follow_campaigns, display_order)
-      VALUES ('Pro', 79, 10, 10000, 5000, 999, 999, 3)
-    `);
-
-    logger.info('✅ Default plans created successfully');
-
-    // Create admin user if doesn't exist
+    // Create admin user if doesn't exist (ALWAYS CHECK, NOT INSIDE PLANS CHECK)
     const adminEmail = 'admin@reachly.com';
     const adminResult = await query(`SELECT id FROM users WHERE email = $1`, [adminEmail]);
     
