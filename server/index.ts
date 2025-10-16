@@ -311,12 +311,22 @@ app.post('/api/campaigns', authMiddleware, async (req: any, res) => {
     const { name, accountId, tags, targetSource, manualTargets, selectedFollowers, message, pacing } = req.body;
     if (!name || !accountId || !message) return res.status(400).json({ error: 'Missing required fields' });
     
+    // Default pacing values if not provided
+    const pacingSettings = {
+      perMinute: pacing?.perMinute || 3,
+      delayMin: pacing?.delayMin || 15,
+      delayMax: pacing?.delayMax || 30,
+      dailyCap: pacing?.dailyCap || 50,
+      retryAttempts: pacing?.retryAttempts || 2
+    };
+    
     const result = await query(`
       INSERT INTO campaigns (user_id, account_id, name, status, target_source, message_template, tags,
         pacing_per_minute, pacing_delay_min, pacing_delay_max, pacing_daily_cap, pacing_retry_attempts)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
     `, [req.user.id, accountId, name, 'draft', targetSource, message, tags ? JSON.stringify(tags) : null,
-        pacing.perMinute, pacing.delayMin, pacing.delayMax, pacing.dailyCap, pacing.retryAttempts]);
+        pacingSettings.perMinute, pacingSettings.delayMin, pacingSettings.delayMax, 
+        pacingSettings.dailyCap, pacingSettings.retryAttempts]);
     
     const campaignId = result.rows[0].id;
     let targets: any[] = [];
@@ -420,12 +430,22 @@ app.post('/api/follow-campaigns', authMiddleware, async (req: any, res) => {
     const { name, accountId, targetSource, manualTargets, selectedFollowers, pacing } = req.body;
     if (!name || !accountId) return res.status(400).json({ error: 'Missing required fields' });
     
+    // Default pacing values if not provided
+    const pacingSettings = {
+      perMinute: pacing?.perMinute || 3,
+      delayMin: pacing?.delayMin || 15,
+      delayMax: pacing?.delayMax || 30,
+      dailyCap: pacing?.dailyCap || 50,
+      retryAttempts: pacing?.retryAttempts || 2
+    };
+    
     const result = await query(`
       INSERT INTO follow_campaigns (user_id, account_id, name, status, target_source,
         pacing_per_minute, pacing_delay_min, pacing_delay_max, pacing_daily_cap, pacing_retry_attempts)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
     `, [req.user.id, accountId, name, 'draft', targetSource,
-        pacing.perMinute, pacing.delayMin, pacing.delayMax, pacing.dailyCap, pacing.retryAttempts]);
+        pacingSettings.perMinute, pacingSettings.delayMin, pacingSettings.delayMax, 
+        pacingSettings.dailyCap, pacingSettings.retryAttempts]);
     
     const campaignId = result.rows[0].id;
     let targets: any[] = [];
