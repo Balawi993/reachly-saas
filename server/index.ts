@@ -12,8 +12,8 @@ const __dirname = path.dirname(__filename);
 import { query, encrypt, initializeDatabase } from './db-postgres';
 import { hashPassword, verifyPassword, generateToken, verifyToken, createUser, getUserByEmail } from './auth';
 import { parseCookies, validateTwitterAccount, extractFollowers } from './twitter';
-import { startCampaign, pauseCampaign, stopCampaign, resumeActiveCampaigns } from './campaign-runner-disabled';
-import { startFollowCampaign, pauseFollowCampaign, stopFollowCampaign, resumeActiveFollowCampaigns } from './follow-runner-disabled';
+import { startCampaign, pauseCampaign, stopCampaign, resumeActiveCampaigns } from './campaign-runner';
+import { startFollowCampaign, pauseFollowCampaign, stopFollowCampaign, resumeActiveFollowCampaigns } from './follow-runner';
 import { getQueueStats } from './queue';
 import logger from './logger';
 
