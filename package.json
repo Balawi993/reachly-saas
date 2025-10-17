@@ -12,6 +12,7 @@
     "build:dev": "vite build --mode development",
     "postinstall": "npm run build",
     "migrate": "node migrate-to-postgres.js",
+    "fix-admin": "echo 'Admin already initialized'",
     "lint": "eslint .",
     "preview": "vite preview"
   },
