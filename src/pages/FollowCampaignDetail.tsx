@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Play, Pause, StopCircle, Users, UserCheck, UserX, Clock } from 'lucide-react';
+import { ArrowLeft, Play, Pause, StopCircle, Users, UserCheck, UserX, Clock, Download, Edit } from 'lucide-react';
 import { DetailSkeleton } from '@/components/loading/PageSkeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
