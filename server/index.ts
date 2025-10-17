@@ -496,7 +496,7 @@ app.get('/api/follow-campaigns/:id', authMiddleware, async (req: any, res) => {
 
 app.post('/api/follow-campaigns', authMiddleware, checkLimit('create_follow_campaign'), async (req: any, res) => {
   try {
-    const { name, accountId, targetSource, manualTargets, selectedFollowers, pacing } = req.body;
+    const { name, accountId, targetSource, manualTargets, selectedFollowers, pacing, isDraft } = req.body;
     if (!name || !accountId) return res.status(400).json({ error: 'Missing required fields' });
     
     // Default pacing values if not provided
@@ -508,11 +508,14 @@ app.post('/api/follow-campaigns', authMiddleware, checkLimit('create_follow_camp
       retryAttempts: pacing?.retryAttempts || 2
     };
     
+    // Set status based on isDraft flag
+    const status = isDraft ? 'draft' : 'pending';
+    
     const result = await query(`
       INSERT INTO follow_campaigns (user_id, account_id, name, status, target_source,
         pacing_per_minute, pacing_delay_min, pacing_delay_max, pacing_daily_cap, pacing_retry_attempts)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
-    `, [req.user.id, accountId, name, 'draft', targetSource,
+    `, [req.user.id, accountId, name, status, targetSource,
         pacingSettings.perMinute, pacingSettings.delayMin, pacingSettings.delayMax, 
         pacingSettings.dailyCap, pacingSettings.retryAttempts]);
     
