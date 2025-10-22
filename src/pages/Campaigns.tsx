@@ -114,70 +114,67 @@ export default function Campaigns() {
           </Tabs>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredCampaigns.map((campaign) => (
             <Card
               key={campaign.id}
-              className="cursor-pointer p-6 shadow-md transition-all hover:shadow-lg"
+              className="cursor-pointer p-4 shadow-md transition-all hover:shadow-lg flex flex-col"
               onClick={() => navigate(`/campaigns/${campaign.id}`)}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-semibold text-foreground">{campaign.name}</h3>
-                    <Badge variant={
+              <div className="space-y-3 flex-1">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-foreground truncate">{campaign.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">@{campaign.account_username}</p>
+                  </div>
+                  <Badge 
+                    variant={
                       campaign.status === 'active' ? 'default' :
                       campaign.status === 'paused' ? 'secondary' :
                       'outline'
-                    }>
-                      {campaign.status}
-                    </Badge>
-                    {campaign.tags && JSON.parse(campaign.tags).map((tag: string) => (
-                      <Badge key={tag} variant="outline">{tag}</Badge>
-                    ))}
+                    }
+                    className="shrink-0"
+                  >
+                    {campaign.status}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <p className="text-lg font-bold text-foreground">{campaign.stats_total}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-primary/10">
+                    <p className="text-lg font-bold text-primary">{campaign.stats_sent}</p>
+                    <p className="text-xs text-muted-foreground">Sent</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-success/10">
+                    <p className="text-lg font-bold text-success">{campaign.stats_replied}</p>
+                    <p className="text-xs text-muted-foreground">Replied</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-destructive/10">
+                    <p className="text-lg font-bold text-destructive">{campaign.stats_failed}</p>
+                    <p className="text-xs text-muted-foreground">Failed</p>
+                  </div>
                   </div>
 
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>Account: {campaign.account_username}</span>
-                    <span>Created: {new Date(campaign.created_at).toLocaleDateString()}</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-semibold text-foreground">
+                      {campaign.stats_total > 0 ? ((campaign.stats_sent / campaign.stats_total) * 100).toFixed(0) : 0}%
+                    </span>
                   </div>
-
-                  <div className="grid grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-2xl font-bold text-foreground">{campaign.stats_total}</p>
-                      <p className="text-xs text-muted-foreground">Total Targets</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-primary">{campaign.stats_sent}</p>
-                      <p className="text-xs text-muted-foreground">Sent</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-success">{campaign.stats_replied}</p>
-                      <p className="text-xs text-muted-foreground">Replied</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-destructive">{campaign.stats_failed}</p>
-                      <p className="text-xs text-muted-foreground">Failed</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium text-foreground">
-                        {campaign.stats_total > 0 ? ((campaign.stats_sent / campaign.stats_total) * 100).toFixed(0) : 0}%
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full bg-gradient-primary transition-all"
-                        style={{ width: `${campaign.stats_total > 0 ? (campaign.stats_sent / campaign.stats_total) * 100 : 0}%` }}
-                      />
-                    </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-gradient-primary transition-all duration-500"
+                      style={{ width: `${campaign.stats_total > 0 ? (campaign.stats_sent / campaign.stats_total) * 100 : 0}%` }}
+                    />
                   </div>
                 </div>
+              </div>
                 
-                <div className="flex gap-2 ml-4">
+              <div className="flex gap-2 mt-3 pt-3 border-t border-border">
                   {campaign.status === 'draft' ? (
                     <Button 
                       size="sm" 
@@ -194,8 +191,7 @@ export default function Campaigns() {
                       }}
                       title="Continue editing draft"
                     >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Continue Setup
+                      <Edit className="h-3 w-3" />
                     </Button>
                   ) : (
                     <>
@@ -206,8 +202,7 @@ export default function Campaigns() {
                           onClick={(e) => handleStart(campaign.id, e)}
                           title="Start campaign"
                         >
-                          <Play className="h-3 w-3 mr-1" />
-                          Start
+                          <Play className="h-3 w-3" />
                         </Button>
                       )}
                       {campaign.status === 'active' && (
@@ -217,8 +212,7 @@ export default function Campaigns() {
                           onClick={(e) => handlePause(campaign.id, e)}
                           title="Pause campaign"
                         >
-                          <Pause className="h-3 w-3 mr-1" />
-                          Pause
+                          <Pause className="h-3 w-3" />
                         </Button>
                       )}
                       {campaign.status !== 'completed' && (
@@ -228,13 +222,11 @@ export default function Campaigns() {
                           onClick={(e) => handleStop(campaign.id, e)}
                           title="Stop campaign"
                         >
-                          <StopCircle className="h-3 w-3 mr-1" />
-                          Stop
+                          <StopCircle className="h-3 w-3" />
                         </Button>
                       )}
                     </>
                   )}
-                </div>
               </div>
             </Card>
           ))}
