@@ -183,6 +183,9 @@ async function processCampaign(campaignId: number) {
 
     const result = await sendDM(campaign.encrypted_cookies, target.username, message);
 
+    // Calculate delay for this attempt (always use configured delay)
+    const delay = campaign.pacing_delay_min + Math.random() * (campaign.pacing_delay_max - campaign.pacing_delay_min);
+
     if (result.success) {
       logMessage(campaignId);
       
@@ -205,7 +208,10 @@ async function processCampaign(campaignId: number) {
       }
 
       console.log(`✅ [Campaign ${campaignId}] Sent to ${target.username}`);
+      console.log(`⏳ [Campaign ${campaignId}] Waiting ${delay.toFixed(1)}s before next message`);
+      await new Promise(resolve => setTimeout(resolve, delay * 1000));
     } else {
+      // Check if we should retry (retry_count starts at 1 after first attempt)
       if (currentRetryCount >= campaign.pacing_retry_attempts) {
         await query(`
           UPDATE targets
@@ -219,7 +225,10 @@ async function processCampaign(campaignId: number) {
           WHERE id = $1
         `, [campaignId]);
 
-        console.log(`❌ [Campaign ${campaignId}] Failed permanently to ${target.username}`);
+        console.log(`❌ [Campaign ${campaignId}] Failed permanently to ${target.username} (${currentRetryCount}/${campaign.pacing_retry_attempts} attempts)`);
+        // Use configured delay even after failure to maintain pacing
+        console.log(`⏳ [Campaign ${campaignId}] Waiting ${delay.toFixed(1)}s before next target`);
+        await new Promise(resolve => setTimeout(resolve, delay * 1000));
       } else {
         await query(`
           UPDATE targets
@@ -227,12 +236,12 @@ async function processCampaign(campaignId: number) {
           WHERE id = $2
         `, [result.error || 'Unknown error', target.id]);
 
-        console.log(`⚠️  [Campaign ${campaignId}] Failed to ${target.username}, will retry`);
+        console.log(`⚠️  [Campaign ${campaignId}] Failed to ${target.username}, will retry (${currentRetryCount}/${campaign.pacing_retry_attempts})`);
+        // Use configured delay before retry to maintain consistent pacing
+        console.log(`⏳ [Campaign ${campaignId}] Waiting ${delay.toFixed(1)}s before retry`);
+        await new Promise(resolve => setTimeout(resolve, delay * 1000));
       }
     }
-
-    const delay = campaign.pacing_delay_min + Math.random() * (campaign.pacing_delay_max - campaign.pacing_delay_min);
-    await new Promise(resolve => setTimeout(resolve, delay * 1000));
 
   } catch (error) {
     console.error(`Error processing campaign ${campaignId}:`, error);
