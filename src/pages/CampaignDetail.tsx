@@ -3,8 +3,11 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, Play, Pause, StopCircle, Edit, Users, Send, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Download, Play, Pause, StopCircle, Edit, Users, Send, TrendingUp, Search, Filter as FilterIcon, BarChart } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { campaigns } from '@/lib/api';
 import { toast } from 'sonner';
@@ -15,6 +18,8 @@ export default function CampaignDetail() {
   const navigate = useNavigate();
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [targetSearch, setTargetSearch] = useState('');
+  const [targetFilter, setTargetFilter] = useState<'all' | 'sent' | 'pending' | 'failed'>('all');
   
   useEffect(() => {
     if (id) {
@@ -105,6 +110,14 @@ export default function CampaignDetail() {
     return <div className="p-8">Campaign not found</div>;
   }
 
+  // Filter targets
+  const filteredTargets = campaign.targets?.filter((target: any) => {
+    const matchesSearch = target.name.toLowerCase().includes(targetSearch.toLowerCase()) ||
+                         target.handle.toLowerCase().includes(targetSearch.toLowerCase());
+    const matchesFilter = targetFilter === 'all' || target.status === targetFilter;
+    return matchesSearch && matchesFilter;
+  }) || [];
+
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -170,7 +183,24 @@ export default function CampaignDetail() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">
+              <BarChart className="mr-2 h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="targets">
+              <Users className="mr-2 h-4 w-4" />
+              Targets ({campaign.targets?.length || 0})
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Edit className="mr-2 h-4 w-4" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
           {[/* eslint-disable @typescript-eslint/no-unused-vars */
             { label: 'Total Targets', value: campaign.stats_total, icon: Users, color: 'text-primary' },
             { label: 'Sent', value: campaign.stats_sent, icon: Send, color: 'text-success' },
@@ -206,53 +236,34 @@ export default function CampaignDetail() {
               />
             </div>
           </div>
-        </Card>
+            </Card>
+          </TabsContent>
 
-        <Card>
-          <div className="border-b border-border p-6">
-            <h2 className="text-xl font-semibold text-foreground">Campaign Details</h2>
-          </div>
-          <div className="grid gap-6 p-6 md:grid-cols-2">
-            <div>
-              <h3 className="mb-2 font-medium text-foreground">Message Template</h3>
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-sm text-muted-foreground">{campaign.message_template}</p>
+          <TabsContent value="targets" className="space-y-4">
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search targets..."
+                  value={targetSearch}
+                  onChange={(e) => setTargetSearch(e.target.value)}
+                  className="pl-10"
+                />
               </div>
+              <Select value={targetFilter} onValueChange={(v: any) => setTargetFilter(v)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-2 font-medium text-foreground">Pacing & Limits</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Messages per minute:</span>
-                    <span className="font-medium text-foreground">{campaign.pacing_per_minute}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delay range:</span>
-                    <span className="font-medium text-foreground">
-                      {campaign.pacing_delay_min}s - {campaign.pacing_delay_max}s
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Daily cap:</span>
-                    <span className="font-medium text-foreground">{campaign.pacing_daily_cap}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
 
-        <Card>
-          <div className="border-b border-border p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Target List ({campaign.targets.length})</h2>
-              <Button variant="ghost" size="sm" onClick={handleExportCSV}>
-                <Download className="mr-2 h-3 w-3" />
-                Export CSV
-              </Button>
-            </div>
-          </div>
+            <Card>
           <div className="max-h-[500px] overflow-y-auto">
             <Table>
             <TableHeader>
@@ -265,7 +276,14 @@ export default function CampaignDetail() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaign.targets.map((target) => (
+              {filteredTargets.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <p className="text-muted-foreground">No targets found</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTargets.map((target: any) => (
                 <TableRow key={target.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -307,11 +325,51 @@ export default function CampaignDetail() {
                     {target.last_attempt_at ? new Date(target.last_attempt_at).toLocaleString() : '-'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+              )}
             </TableBody>
           </Table>
           </div>
-        </Card>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <div className="border-b border-border p-4">
+                <h2 className="text-lg font-semibold text-foreground">Campaign Details</h2>
+              </div>
+              <div className="grid gap-6 p-4 md:grid-cols-2">
+                <div>
+                  <h3 className="mb-2 font-medium text-foreground">Message Template</h3>
+                  <div className="rounded-lg bg-muted p-4">
+                    <p className="text-sm text-muted-foreground">{campaign.message_template}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="mb-2 font-medium text-foreground">Pacing & Limits</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Messages per minute:</span>
+                        <span className="font-medium text-foreground">{campaign.pacing_per_minute}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Delay range:</span>
+                        <span className="font-medium text-foreground">
+                          {campaign.pacing_delay_min}s - {campaign.pacing_delay_max}s
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Daily cap:</span>
+                        <span className="font-medium text-foreground">{campaign.pacing_daily_cap}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
