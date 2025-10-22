@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Send, Users, TrendingUp } from 'lucide-react';
+import { Send, Users, TrendingUp, Target, UserPlus, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,7 @@ import { DashboardSkeleton } from '@/components/loading/PageSkeleton';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<any>({ totalDMs: 0, activeCampaigns: 0, connectedAccounts: 0, replyRate: '0.0' });
+  const [stats, setStats] = useState<any>({ totalDMs: 0, activeCampaigns: 0, connectedAccounts: 0, totalTargets: 0 });
   const [recentCampaigns, setRecentCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -24,7 +24,7 @@ export default function Dashboard() {
         campaignsAPI.list()
       ]);
       setStats(statsData);
-      setRecentCampaigns(campaignsData.slice(0, 3));
+      setRecentCampaigns(campaignsData.slice(0, 5));
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -39,13 +39,13 @@ export default function Dashboard() {
   const totalDMs = stats.totalDMs;
   const activeCampaigns = stats.activeCampaigns;
   const totalAccounts = stats.connectedAccounts;
-  const replyRate = stats.replyRate;
+  const totalTargets = stats.totalTargets;
 
   const statsDisplay = [
     { label: 'Total DMs Sent', value: totalDMs, icon: Send, color: 'text-primary' },
     { label: 'Active Campaigns', value: activeCampaigns, icon: TrendingUp, color: 'text-success' },
     { label: 'Connected Accounts', value: totalAccounts, icon: Users, color: 'text-warning' },
-    { label: 'Reply Rate', value: `${replyRate}%`, icon: TrendingUp, color: 'text-primary' },
+    { label: 'Total Targets', value: totalTargets, icon: Target, color: 'text-info' },
   ];
   
   if (loading) {
@@ -65,16 +65,16 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statsDisplay.map((stat) => (
-            <Card key={stat.label} className="p-6 shadow-md transition-shadow hover:shadow-lg">
+            <Card key={stat.label} className="p-4 shadow-md transition-all hover:shadow-lg cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
                 </div>
-                <div className={`rounded-lg bg-muted p-3 ${stat.color}`}>
-                  <stat.icon className="h-6 w-6" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
                 </div>
               </div>
             </Card>
@@ -82,78 +82,61 @@ export default function Dashboard() {
         </div>
 
         <Card className="shadow-md">
-          <div className="border-b border-border p-6">
-            <h2 className="text-xl font-semibold text-foreground">Recent Activity</h2>
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/campaigns')}>
+              View All →
+            </Button>
           </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {recentCampaigns.map((campaign) => (
-                <div key={campaign.id} className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-muted">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-primary">
-                      <Send className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{campaign.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {campaign.stats_sent} / {campaign.stats_total} messages sent
-                      </p>
-                    </div>
+          <div className="p-4 space-y-2">
+            {recentCampaigns.map((campaign) => (
+              <div 
+                key={campaign.id} 
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                onClick={() => navigate(`/campaigns/${campaign.id}`)}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${
+                    campaign.status === 'active' ? 'bg-success animate-pulse' : 'bg-muted'
+                  }`} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{campaign.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {campaign.stats_sent}/{campaign.stats_total} sent
+                    </p>
                   </div>
-                  <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'paused' ? 'secondary' : 'outline'}>
-                    {campaign.status}
-                  </Badge>
                 </div>
-              ))}
-            </div>
+                <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'paused' ? 'secondary' : 'outline'} className="text-xs">
+                  {campaign.status}
+                </Badge>
+              </div>
+            ))}
           </div>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="shadow-md">
-            <div className="border-b border-border p-6">
-              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-            </div>
-            <div className="grid gap-3 p-6">
-              <Button onClick={() => navigate('/campaigns/new')} variant="outline" className="justify-start">
-                <Send className="mr-2 h-4 w-4" />
-                Create New Campaign
-              </Button>
-              <Button onClick={() => navigate('/accounts')} variant="outline" className="justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Manage Accounts
-              </Button>
-              <Button onClick={() => navigate('/settings')} variant="outline" className="justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Account Settings
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="shadow-md">
-            <div className="border-b border-border p-6">
-              <h2 className="text-xl font-semibold text-foreground">Performance Insights</h2>
-            </div>
-            <div className="space-y-4 p-6">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Messages Delivered</span>
-                <span className="font-medium text-foreground">
-                  {totalDMs}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Reply Rate</span>
-                <span className="font-medium text-success">{replyRate}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Active Campaigns</span>
-                <span className="font-medium text-primary">
-                  {activeCampaigns}
-                </span>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <Card className="shadow-md">
+          <div className="border-b border-border p-4">
+            <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
+          </div>
+          <div className="grid gap-3 p-4">
+            <Button onClick={() => navigate('/campaigns/new')} variant="outline" className="justify-start">
+              <Send className="mr-2 h-4 w-4" />
+              Create DM Campaign
+            </Button>
+            <Button onClick={() => navigate('/follow-campaigns/new')} variant="outline" className="justify-start">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create Follow Campaign
+            </Button>
+            <Button onClick={() => navigate('/accounts')} variant="outline" className="justify-start">
+              <Users className="mr-2 h-4 w-4" />
+              Manage Accounts
+            </Button>
+            <Button onClick={() => navigate('/settings')} variant="outline" className="justify-start">
+              <Settings className="mr-2 h-4 w-4" />
+              Account Settings
+            </Button>
+          </div>
+        </Card>
       </div>
     </div>
   );
