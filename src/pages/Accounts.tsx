@@ -2,8 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, RefreshCw, Trash2, CheckCircle, XCircle, MoreVertical, Send, UserPlus, TrendingUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -123,42 +129,69 @@ export default function Accounts() {
           </Dialog>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {accountsList.map((account) => (
-            <Card key={account.id} className="p-6 shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
+            <Card key={account.id} className="p-4 shadow-md hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage src={account.avatar} />
                     <AvatarFallback>{account.username[0]}</AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-foreground">{account.username}</h3>
-                      {account.is_valid ? (
-                        <Badge variant="default" className="bg-success">
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Valid
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Invalid
-                        </Badge>
-                      )}
+                      <h3 className="font-semibold text-foreground truncate">{account.username}</h3>
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${
+                        account.is_valid ? 'bg-success' : 'bg-destructive'
+                      }`} />
                     </div>
-                    <p className="text-sm text-muted-foreground">{account.handle}</p>
                     <p className="text-xs text-muted-foreground">
-                      Last validated: {account.last_validated ? new Date(account.last_validated).toLocaleString() : 'Never'}
+                      {account.is_valid ? 'Active' : 'Connection Error'}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteAccount(account.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => loadAccounts()}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDeleteAccount(account.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Remove
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 p-3 bg-muted/50 rounded-lg">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-foreground">{account.campaigns_count || 0}</p>
+                  <p className="text-xs text-muted-foreground">Campaigns</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-primary">{account.dms_sent || 0}</p>
+                  <p className="text-xs text-muted-foreground">DMs</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-success">
+                    {account.success_rate ? `${account.success_rate}%` : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Success</p>
                 </div>
               </div>
+
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Last validated: {account.last_validated ? new Date(account.last_validated).toLocaleDateString() : 'Never'}
+              </p>
             </Card>
           ))}
 
