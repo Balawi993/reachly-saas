@@ -81,62 +81,78 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <Card className="shadow-md">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/campaigns')}>
-              View All →
-            </Button>
-          </div>
-          <div className="p-4 space-y-2">
-            {recentCampaigns.map((campaign) => (
-              <div 
-                key={campaign.id} 
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                onClick={() => navigate(`/campaigns/${campaign.id}`)}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${
-                    campaign.status === 'active' ? 'bg-success animate-pulse' : 'bg-muted'
-                  }`} />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{campaign.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {campaign.stats_sent}/{campaign.stats_total} sent
-                    </p>
-                  </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="shadow-md">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/campaigns')}>
+                View All →
+              </Button>
+            </div>
+            <div className="p-4 space-y-2">
+              {recentCampaigns.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Send className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                  <p className="mt-2 text-sm text-muted-foreground">No campaigns yet</p>
+                  <Button 
+                    size="sm" 
+                    className="mt-3 bg-gradient-primary"
+                    onClick={() => navigate('/campaigns/new')}
+                  >
+                    Create Campaign
+                  </Button>
                 </div>
-                <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'paused' ? 'secondary' : 'outline'} className="text-xs">
-                  {campaign.status}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
+              ) : (
+                recentCampaigns.map((campaign) => (
+                  <div 
+                    key={campaign.id} 
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${
+                        campaign.status === 'active' ? 'bg-success animate-pulse' : 'bg-muted'
+                      }`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{campaign.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {campaign.stats_sent}/{campaign.stats_total} sent
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={campaign.status === 'active' ? 'default' : campaign.status === 'paused' ? 'secondary' : 'outline'} className="text-xs shrink-0">
+                      {campaign.status}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
 
-        <Card className="shadow-md">
-          <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
-          </div>
-          <div className="grid gap-3 p-4">
-            <Button onClick={() => navigate('/campaigns/new')} variant="outline" className="justify-start">
-              <Send className="mr-2 h-4 w-4" />
-              Create DM Campaign
-            </Button>
-            <Button onClick={() => navigate('/follow-campaigns/new')} variant="outline" className="justify-start">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Create Follow Campaign
-            </Button>
-            <Button onClick={() => navigate('/accounts')} variant="outline" className="justify-start">
-              <Users className="mr-2 h-4 w-4" />
-              Manage Accounts
-            </Button>
-            <Button onClick={() => navigate('/settings')} variant="outline" className="justify-start">
-              <Settings className="mr-2 h-4 w-4" />
-              Account Settings
-            </Button>
-          </div>
-        </Card>
+          <Card className="shadow-md">
+            <div className="border-b border-border p-4">
+              <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
+            </div>
+            <div className="grid gap-3 p-4">
+              <Button onClick={() => navigate('/campaigns/new')} variant="outline" className="justify-start">
+                <Send className="mr-2 h-4 w-4" />
+                Create DM Campaign
+              </Button>
+              <Button onClick={() => navigate('/follow-campaigns/new')} variant="outline" className="justify-start">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create Follow Campaign
+              </Button>
+              <Button onClick={() => navigate('/accounts')} variant="outline" className="justify-start">
+                <Users className="mr-2 h-4 w-4" />
+                Manage Accounts
+              </Button>
+              <Button onClick={() => navigate('/settings')} variant="outline" className="justify-start">
+                <Settings className="mr-2 h-4 w-4" />
+                Account Settings
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
