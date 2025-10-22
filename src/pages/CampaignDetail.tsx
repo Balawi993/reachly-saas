@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, Play, Pause, StopCircle, Edit } from 'lucide-react';
+import { ArrowLeft, Download, Play, Pause, StopCircle, Edit, Users, Send, TrendingUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { campaigns } from '@/lib/api';
@@ -108,25 +108,24 @@ export default function CampaignDetail() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Button variant="outline" size="icon" onClick={() => navigate('/campaigns')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-foreground">{campaign.name}</h1>
-              <Badge variant={
-                campaign.status === 'active' ? 'default' :
-                campaign.status === 'paused' ? 'secondary' :
-                'outline'
-              }>
-                {campaign.status}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">
-              Account: {campaign.account_handle} • Created {new Date(campaign.created_at).toLocaleDateString()}
+            <h1 className="text-2xl font-bold text-foreground">{campaign.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              Campaign Details
+              <span className="ml-2 text-xs opacity-50">• Live updates every 5s</span>
             </p>
           </div>
+          <Badge variant={
+            campaign.status === 'active' ? 'default' :
+            campaign.status === 'paused' ? 'secondary' :
+            'outline'
+          }>
+            {campaign.status}
+          </Badge>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExportCSV} title="Export targets to CSV">
               <Download className="mr-2 h-4 w-4" />
@@ -171,23 +170,25 @@ export default function CampaignDetail() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground">Total Targets</p>
-            <p className="mt-2 text-3xl font-bold text-foreground">{campaign.stats_total}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground">Sent</p>
-            <p className="mt-2 text-3xl font-bold text-primary">{campaign.stats_sent}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground">Replied</p>
-            <p className="mt-2 text-3xl font-bold text-success">{campaign.stats_replied}</p>
-          </Card>
-          <Card className="p-6">
-            <p className="text-sm text-muted-foreground">Failed</p>
-            <p className="mt-2 text-3xl font-bold text-destructive">{campaign.stats_failed}</p>
-          </Card>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[/* eslint-disable @typescript-eslint/no-unused-vars */
+            { label: 'Total Targets', value: campaign.stats_total, icon: Users, color: 'text-primary' },
+            { label: 'Sent', value: campaign.stats_sent, icon: Send, color: 'text-success' },
+            { label: 'Replied', value: campaign.stats_replied, icon: TrendingUp, color: 'text-warning' },
+            { label: 'Failed', value: campaign.stats_failed, icon: TrendingUp, color: 'text-destructive' },
+          ].map((stat) => (
+            <Card key={stat.label} className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                </div>
+                <div className={`rounded-lg bg-muted p-2 ${stat.color}`}>
+                  <stat.icon className="h-5 w-5" />
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
 
         <Card className="p-6">
@@ -244,7 +245,13 @@ export default function CampaignDetail() {
 
         <Card>
           <div className="border-b border-border p-4">
-            <h2 className="text-lg font-semibold text-foreground">Target List ({campaign.targets.length})</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Target List ({campaign.targets.length})</h2>
+              <Button variant="ghost" size="sm" onClick={handleExportCSV}>
+                <Download className="mr-2 h-3 w-3" />
+                Export CSV
+              </Button>
+            </div>
           </div>
           <div className="max-h-[500px] overflow-y-auto">
             <Table>

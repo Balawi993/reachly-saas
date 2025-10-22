@@ -89,7 +89,10 @@ export default function FollowCampaigns() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Follow Campaigns</h1>
-            <p className="text-muted-foreground">Automate following targeted Twitter accounts</p>
+            <p className="text-muted-foreground">
+              Automate following targeted Twitter accounts
+              <span className="ml-2 text-xs opacity-50">• Auto-refreshing every 5s</span>
+            </p>
           </div>
           <Button onClick={() => navigate('/follow-campaigns/new')} className="bg-gradient-primary">
             <Plus className="mr-2 h-4 w-4" />
@@ -119,7 +122,26 @@ export default function FollowCampaigns() {
         </div>
 
         <div className="grid gap-4">
-          {filteredCampaigns.map((campaign) => (
+          {filteredCampaigns.length === 0 ? (
+            <Card className="p-12 text-center">
+              <UserPlus className="mx-auto h-16 w-16 text-muted-foreground opacity-50" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                {search || filter !== 'all' ? 'No campaigns found' : 'No follow campaigns yet'}
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {search || filter !== 'all' 
+                  ? 'Try adjusting your search or filters' 
+                  : 'Create your first follow campaign to get started'}
+              </p>
+              {!search && filter === 'all' && (
+                <Button className="mt-4 bg-gradient-primary" onClick={() => navigate('/follow-campaigns/new')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Follow Campaign
+                </Button>
+              )}
+            </Card>
+          ) : (
+            filteredCampaigns.map((campaign) => (
             <Card
               key={campaign.id}
               className="cursor-pointer p-6 shadow-md transition-all hover:shadow-lg"
@@ -241,24 +263,7 @@ export default function FollowCampaigns() {
                 </div>
               </div>
             </Card>
-          ))}
-
-          {filteredCampaigns.length === 0 && (
-            <Card className="p-12 text-center">
-              <div className="mx-auto max-w-sm space-y-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <UserPlus className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">No follow campaigns yet</h3>
-                <p className="text-muted-foreground">
-                  Create your first follow campaign to start growing your network
-                </p>
-                <Button onClick={() => navigate('/follow-campaigns/new')} className="bg-gradient-primary">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Follow Campaign
-                </Button>
-              </div>
-            </Card>
+          ))
           )}
         </div>
       </div>
