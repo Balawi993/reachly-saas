@@ -245,16 +245,22 @@ export async function extractFollowers(
       
       console.log(`📥 Batch ${attempts}: Requesting ${requestCount} followers (have ${followers.length}/${count})...`);
       
-      const url = `https://api.twitter.com/1.1/followers/list.json?user_id=${userId}&count=${requestCount}&cursor=${cursor}&skip_status=true&include_user_entities=false`;
+      // استخدام Cloudflare Worker للمتابعين
+      const proxyUrl = `https://twitter-proxy.safollow20.workers.dev`;
       
-      const response = await fetch(url, {
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
         headers: {
-          'authorization': `Bearer ${BEARER_TOKEN}`,
-          'cookie': `auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
-          'x-csrf-token': cookies.ct0,
-          'x-twitter-auth-type': 'OAuth2Session',
-          'x-twitter-active-user': 'yes',
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'getFollowers',
+          userId: userId,
+          username: targetUsername,
+          cookies: cookies,
+          count: requestCount,
+          cursor: cursor
+        })
       });
       
       console.log('Response status:', response.status);
@@ -283,7 +289,7 @@ export async function extractFollowers(
           });
         }
         
-        // الحصول على cursor للصفحة التالية
+        // الحصول على cursor للصفحة التالية  
         cursor = data.next_cursor_str || '0';
         console.log(`Total followers so far: ${followers.length}, Next cursor: ${cursor}`);
       } else {
