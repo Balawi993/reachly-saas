@@ -56,6 +56,10 @@ export async function validateTwitterAccount(
     console.log('Validating account:', expectedUsername);
     console.log('Cookies:', { auth_token: cookies.auth_token.substring(0, 10) + '...', ct0: cookies.ct0.substring(0, 10) + '...' });
     
+    // تأخير عشوائي لتجنب rate limiting
+    const delay = 1000 + Math.random() * 2000; // 1-3 seconds
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
     // استخدام REST API بدلاً من GraphQL
     const url = `https://x.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`;
 
@@ -76,6 +80,9 @@ export async function validateTwitterAccount(
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
+        'x-forwarded-for': '192.168.1.100',
+        'x-real-ip': '192.168.1.100',
+        'cf-connecting-ip': '192.168.1.100',
       }
     });
 
