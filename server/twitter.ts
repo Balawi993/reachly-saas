@@ -60,30 +60,19 @@ export async function validateTwitterAccount(
     const delay = 1000 + Math.random() * 2000; // 1-3 seconds
     await new Promise(resolve => setTimeout(resolve, delay));
     
-    // استخدام mobile.twitter.com بدلاً من x.com (أقل حماية من Cloudflare)
-    const url = `https://mobile.twitter.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`;
+    // استخدام Netlify proxy (مجاني ولا يمر عبر Railway)
+    // استخدام Netlify proxy الجديد
+    const proxyUrl = `https://admirable-sunshine-ca6107.netlify.app/.netlify/functions/twitter-proxy`;
 
-    const response = await fetch(url, {
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
       headers: {
-        'authorization': `Bearer ${BEARER_TOKEN}`,
-        'cookie': `auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
-        'x-csrf-token': cookies.ct0,
-        'x-twitter-auth-type': 'OAuth2Session',
-        'x-twitter-active-user': 'yes',
-        'content-type': 'application/json',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-        'accept': '*/*',
-        'accept-language': 'en-US,en;q=0.9',
-        'accept-encoding': 'gzip, deflate, br',
-        'referer': 'https://mobile.twitter.com/',
-        'origin': 'https://mobile.twitter.com',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'x-forwarded-for': '192.168.1.100',
-        'x-real-ip': '192.168.1.100',
-        'cf-connecting-ip': '192.168.1.100',
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: expectedUsername,
+        cookies: cookies
+      })
     });
 
     console.log('Twitter API response status:', response.status);
