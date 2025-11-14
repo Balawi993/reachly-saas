@@ -60,9 +60,8 @@ export async function validateTwitterAccount(
     const delay = 1000 + Math.random() * 2000; // 1-3 seconds
     await new Promise(resolve => setTimeout(resolve, delay));
     
-    // استخدام Netlify proxy (مجاني ولا يمر عبر Railway)
-    // استخدام Netlify proxy الجديد
-    const proxyUrl = `https://admirable-sunshine-ca6107.netlify.app/.netlify/functions/twitter-proxy`;
+    // استخدام Cloudflare Worker (مجاني وسريع)
+    const proxyUrl = `https://twitter-proxy.safollow20.workers.dev`;
 
     const response = await fetch(proxyUrl, {
       method: 'POST',
