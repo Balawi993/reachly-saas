@@ -56,23 +56,8 @@ export async function validateTwitterAccount(
     console.log('Validating account:', expectedUsername);
     console.log('Cookies:', { auth_token: cookies.auth_token.substring(0, 10) + '...', ct0: cookies.ct0.substring(0, 10) + '...' });
     
-    const url = `https://x.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
-      JSON.stringify({ screen_name: expectedUsername, withSafetyModeUserFields: true })
-    )}&features=${encodeURIComponent(
-      JSON.stringify({
-        hidden_profile_likes_enabled: true,
-        hidden_profile_subscriptions_enabled: true,
-        responsive_web_graphql_exclude_directive_enabled: true,
-        verified_phone_label_enabled: false,
-        subscriptions_verification_info_is_identity_verified_enabled: true,
-        subscriptions_verification_info_verified_since_enabled: true,
-        highlights_tweets_tab_ui_enabled: true,
-        responsive_web_twitter_article_notes_tab_enabled: false,
-        creator_subscriptions_tweet_preview_api_enabled: true,
-        responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
-        responsive_web_graphql_timeline_navigation_enabled: true
-      })
-    )}`;
+    // استخدام REST API بدلاً من GraphQL
+    const url = `https://x.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`;
 
     const response = await fetch(url, {
       headers: {
@@ -96,15 +81,14 @@ export async function validateTwitterAccount(
     const data = await response.json();
     console.log('Twitter API response:', JSON.stringify(data).substring(0, 200));
     
-    const user = data?.data?.user?.result;
-    
-    if (!user || user.rest_id === undefined) {
+    // REST API response structure
+    if (!data || !data.screen_name) {
       console.error('User not found in response');
       return { valid: false, username: '', avatar: '', error: 'User not found' };
     }
 
-    const username = user.legacy?.screen_name || '';
-    const avatar = user.legacy?.profile_image_url_https || '';
+    const username = data.screen_name || '';
+    const avatar = data.profile_image_url_https || '';
 
     console.log('Found user:', username);
 
