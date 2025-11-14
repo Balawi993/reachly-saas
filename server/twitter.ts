@@ -60,10 +60,10 @@ export async function validateTwitterAccount(
     const delay = 1000 + Math.random() * 2000; // 1-3 seconds
     await new Promise(resolve => setTimeout(resolve, delay));
     
-    // استخدام REST API بدلاً من GraphQL
-    const url = `https://x.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`;
+    // استخدام proxy لتجنب حجب Cloudflare
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://x.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`)}`;
 
-    const response = await fetch(url, {
+    const response = await fetch(proxyUrl, {
       headers: {
         'authorization': `Bearer ${BEARER_TOKEN}`,
         'cookie': `auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
