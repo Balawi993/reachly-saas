@@ -56,7 +56,7 @@ export async function validateTwitterAccount(
     console.log('Validating account:', expectedUsername);
     console.log('Cookies:', { auth_token: cookies.auth_token.substring(0, 10) + '...', ct0: cookies.ct0.substring(0, 10) + '...' });
     
-    const url = `https://twitter.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
+    const url = `https://x.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
       JSON.stringify({ screen_name: expectedUsername, withSafetyModeUserFields: true })
     )}&features=${encodeURIComponent(
       JSON.stringify({
@@ -144,7 +144,7 @@ async function getUserId(username: string, cookies: TwitterCookies): Promise<str
     responsive_web_graphql_timeline_navigation_enabled: true
   };
   
-  const url = `https://twitter.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
+  const url = `https://x.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
     JSON.stringify(variables)
   )}&features=${encodeURIComponent(
     JSON.stringify(features)
@@ -360,7 +360,7 @@ async function extractFollowersGraphQL(
       responsive_web_graphql_timeline_navigation_enabled: true
     };
     
-    const url = `https://twitter.com/i/api/graphql/${queryId}/Followers?variables=${encodeURIComponent(
+    const url = `https://x.com/i/api/graphql/${queryId}/Followers?variables=${encodeURIComponent(
       JSON.stringify(variables)
     )}&features=${encodeURIComponent(
       JSON.stringify(features)
