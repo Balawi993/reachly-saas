@@ -79,7 +79,16 @@ export async function validateTwitterAccount(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Twitter API error:', errorText);
-      return { valid: false, username: '', avatar: '', error: `HTTP ${response.status}: Invalid credentials` };
+      
+      // تفاصيل أكثر للتشخيص
+      console.error('Full error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText.substring(0, 500)
+      });
+      
+      return { valid: false, username: '', avatar: '', error: `HTTP ${response.status}: ${errorText.substring(0, 100)}` };
     }
 
     const data = await response.json();
