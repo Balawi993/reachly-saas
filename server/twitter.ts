@@ -71,6 +71,7 @@ export async function validateTwitterAccount(
       body: JSON.stringify({
         username: expectedUsername,
         cookies: cookies
+        // نرجع للكوكيز مع Headers كاملة!
       })
     });
 
