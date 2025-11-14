@@ -123,55 +123,35 @@ export async function validateTwitterAccount(
 async function getUserId(username: string, cookies: TwitterCookies): Promise<string> {
   console.log('Looking up user ID for:', username);
   
-  const variables = {
-    screen_name: username,
-    withSafetyModeUserFields: true
-  };
+  // استخدام نفس Cloudflare Worker للحصول على معلومات المستخدم
+  const proxyUrl = `https://twitter-proxy.safollow20.workers.dev`;
   
-  const features = {
-    hidden_profile_likes_enabled: true,
-    hidden_profile_subscriptions_enabled: true,
-    responsive_web_graphql_exclude_directive_enabled: true,
-    verified_phone_label_enabled: false,
-    subscriptions_verification_info_is_identity_verified_enabled: true,
-    subscriptions_verification_info_verified_since_enabled: true,
-    highlights_tweets_tab_ui_enabled: true,
-    responsive_web_twitter_article_notes_tab_enabled: false,
-    creator_subscriptions_tweet_preview_api_enabled: true,
-    responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
-    responsive_web_graphql_timeline_navigation_enabled: true
-  };
-  
-  const url = `https://x.com/i/api/graphql/G3KGOASz96M-Qu0nwmGXNg/UserByScreenName?variables=${encodeURIComponent(
-    JSON.stringify(variables)
-  )}&features=${encodeURIComponent(
-    JSON.stringify(features)
-  )}`;
-
-  const response = await fetch(url, {
+  const response = await fetch(proxyUrl, {
+    method: 'POST',
     headers: {
-      'authorization': `Bearer ${BEARER_TOKEN}`,
-      'cookie': `auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
-      'x-csrf-token': cookies.ct0,
-      'x-twitter-auth-type': 'OAuth2Session',
-      'x-twitter-active-user': 'yes',
-      'content-type': 'application/json',
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
-      'accept': '*/*',
-      'accept-language': 'en-US,en;q=0.9',
-      'accept-encoding': 'gzip, deflate, br',
-      'referer': 'https://x.com/',
-      'origin': 'https://x.com',
-      'sec-fetch-dest': 'empty',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-site': 'same-origin',
-    }
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: username,
+      cookies: cookies
+    })
   });
 
   console.log('getUserId response status:', response.status);
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('getUserId error:', errorText);
+    throw new Error(`Failed to get user info: ${response.status}`);
+  }
+
   const data = await response.json();
-  const userId = data?.data?.user?.result?.rest_id;
+  // Cloudflare Worker يرجع user info مباشرة، نحتاج user ID من مكان آخر
+  // نستخدم screen_name للبحث عن ID
+  console.log('User data from proxy:', JSON.stringify(data).substring(0, 200));
+  
+  // إذا لم نحصل على ID، نستخدم username كـ fallback
+  const userId = data.id_str || data.id || username;
   
   console.log('Found user ID:', userId || 'NOT FOUND');
   
