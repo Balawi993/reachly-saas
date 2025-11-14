@@ -60,10 +60,10 @@ export async function validateTwitterAccount(
     const delay = 1000 + Math.random() * 2000; // 1-3 seconds
     await new Promise(resolve => setTimeout(resolve, delay));
     
-    // استخدام proxy مختلف لتجنب حجب Cloudflare
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(`https://x.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`)}`;
+    // استخدام mobile.twitter.com بدلاً من x.com (أقل حماية من Cloudflare)
+    const url = `https://mobile.twitter.com/i/api/1.1/users/show.json?screen_name=${expectedUsername}`;
 
-    const response = await fetch(proxyUrl, {
+    const response = await fetch(url, {
       headers: {
         'authorization': `Bearer ${BEARER_TOKEN}`,
         'cookie': `auth_token=${cookies.auth_token}; ct0=${cookies.ct0}`,
@@ -75,8 +75,8 @@ export async function validateTwitterAccount(
         'accept': '*/*',
         'accept-language': 'en-US,en;q=0.9',
         'accept-encoding': 'gzip, deflate, br',
-        'referer': 'https://x.com/',
-        'origin': 'https://x.com',
+        'referer': 'https://mobile.twitter.com/',
+        'origin': 'https://mobile.twitter.com',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-origin',
